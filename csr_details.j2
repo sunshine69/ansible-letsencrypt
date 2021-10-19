@@ -1,0 +1,24 @@
+[req]
+default_bits = {{ key_size|default(2048) }}
+prompt = no
+default_md = sha256
+req_extensions = req_ext
+distinguished_name = dn
+
+[ dn ]
+C={{ ca_country|default('AU') }}
+ST={{ ca_state|default('QLD') }}
+L={{ ca_location|default('Brisbane') }}
+O={{ ca_org|default('kieu') }}
+OU={{ ca_org_unit|default('DevOps') }}
+emailAddress={{ contact_email|default('youremail@yourdomain') }}
+CN = {{ cert_domain }}
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = {{ alt_names_1|default(cert_domain) }}
+{% if alt_names_2 is defined %}
+DNS.2 = {{ alt_names_2 }}
+{% endif %}

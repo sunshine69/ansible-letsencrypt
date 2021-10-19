@@ -1,0 +1,43 @@
+- set_fact:
+    cert_domain_filename: "{{ cert_domain_item['name'] | replace('*', 'star') }}"
+    cert_domain: "{{ cert_domain_item['name'] }}"
+
+- block:
+    - name: "Generate the {{ cert_domain_filename }}.csr_details.txt"
+      template:
+        src: "{{ work_dir }}/csr_details.j2"
+        dest: "{{ work_dir }}/{{ cert_domain_filename }}.csr_details.txt"
+
+    - get_url:
+        url: "{{ intermediate_pem_url }}"
+        dest: "{{ work_dir }}/intermediate.pem"
+
+    - name: Generate new keys pair and csr
+      shell: |
+        rm -f *{{ cert_domain_filename }}*.key *{{ cert_domain_filename }}*.crt *{{ cert_domain_filename }}*.pkcs12 *{{ cert_domain_filename }}*.csr || true
+        if [ ! -f "{{ work_dir }}/account.key" ]; then openssl genrsa -out account.key; fi
+        openssl req -new -sha256 -nodes -out {{ cert_domain_filename }}.csr -newkey rsa:2048 -keyout {{ cert_domain_filename }}.key -config <( cat {{ cert_domain_filename }}.csr_details.txt )
+      args:
+        chdir: "{{ work_dir }}"
+        executable: /bin/bash
+
+  when: reset_key|default()
+
+- acme_certificate:
+    acme_directory: "{{ acme_directory }}"
+    account_key: "{{ work_dir }}/account.key"
+    account_email: "{{ account_email }}"
+    acme_version: 2
+    terms_agreed: yes
+    csr: "{{ work_dir }}/{{ cert_domain_filename }}.csr"
+    dest: "{{ work_dir }}/{{ cert_domain_filename }}.crt"
+    challenge: "{{ letsencrypt_challenge|default('dns-01') }}"
+    remaining_days: "{{ remaining_days }}"
+  register: sample_com_challenge
+
+- debug:
+    var: sample_com_challenge
+
+- include_tasks: "update-{{ cert_domain_filename }}.yaml"
+  when: sample_com_challenge.changed|default() or reset_key|default()
+

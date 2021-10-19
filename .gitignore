@@ -1,0 +1,6 @@
+*.crt
+*.key
+*.pem
+*.csr
+*.pkcs12
+*.csr_details.txt

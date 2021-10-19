@@ -1,0 +1,22 @@
+# Add your own new vars here to be used by your own custom playbook hook such as UPDATE-<Domain>/yaml
+
+# List of cert_domains. Wildcard - use *. test_url is the url that we do tls connect to test the expirey date
+cert_domains:
+  - name: "*.example.org"
+    test_url: somedomain.com:8080
+    minimum_remaining_days: 14
+
+acme_directory: https://acme-v02.api.letsencrypt.org/directory
+# For testing
+# acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+
+# Look https://letsencrypt.org/certificates/ read the section Intermediate Certificates.
+intermediate_pem_url: "https://letsencrypt.org/certs/lets-encrypt-r3.pem"
+# dns-01 also supported. Implement it in the update-<YOUR_DOMAIN>.yaml
+letsencrypt_challenge: http-01
+
+# When it is dns-01 select the method to update. Look into the update-XXX.yaml for xample
+dns_method: "duckdns"
+
+#account_email: "someone@somewhere.com"
+remaining_days: 12

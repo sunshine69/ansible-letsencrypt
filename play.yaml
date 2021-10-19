@@ -1,0 +1,30 @@
+# Modify vars.yaml
+# Make a decision which resover method you need. Copy the file update-SAMPLE_DOMAIN.yaml to your own per domain and implement the solvers and run hook there.
+# Edit csr_details.j2 to suit with your org information
+
+# Example command. Please remove the -e '{reset_key: True}' if you re-run it manually
+# Use --vault-password-file=<path> if you add vaulted var in vars.yaml
+# ansible-playbook play.yaml  -e '{reset_key: True}'
+
+- name: LetsEcrypt
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - vars.yaml
+  vars:
+    work_dir: "{{ playbook_dir }}"
+
+  tasks:
+    #- meta: end_host
+    #  when: 'ansible_hostname != inventory_hostname'
+    - include_tasks: cert-request.yaml
+      loop: "{{ cert_domains }}"
+      loop_control:
+        loop_var: cert_domain_item
+
+    - name: Deploy the cron task to update
+      cron:
+        name: Update letsencrypt certificate
+        job: "cd {{ playbook_dir }} && python3 certificate-check.py"
+        special_time: weekly
