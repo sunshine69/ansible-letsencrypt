@@ -1,1 +1,1 @@
-This has a playbook to update the cert if needed with letsencrypt and reload jenkins.
+Look into the play.yaml for instructions to use.
