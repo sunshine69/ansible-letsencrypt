@@ -1,10 +1,16 @@
 # Modify vars.yaml
-# Make a decision which resover method you need. Copy the file update-SAMPLE_DOMAIN.yaml to your own per domain and implement the solvers and run hook there.
+
+# Make a decision which resolver method you need. Copy the file update-SAMPLE_DOMAIN.yaml to your own
+# per domain and implement the solvers and run hook there.
+# By default http-01 is supported - it will automatically start a server for you.
+
 # Edit csr_details.j2 to suit with your org information
 
 # Example command. Please remove the -e '{reset_key: True}' if you re-run it manually
 # Use --vault-password-file=<path> if you add vaulted var in vars.yaml
 # ansible-playbook play.yaml  -e '{reset_key: True}'
+
+# If all good, a cron task will deployed to run the check weekly and update if required.
 
 - name: LetsEcrypt
   hosts: localhost

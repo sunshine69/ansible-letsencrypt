@@ -20,3 +20,7 @@ dns_method: "duckdns"
 
 #account_email: "someone@somewhere.com"
 remaining_days: 12
+
+# Used to encrypt your key or in your script hook to generate/convert into different type
+# (like java cert requries to have encrypted key
+key_passphrase: your-secret-passphrase
