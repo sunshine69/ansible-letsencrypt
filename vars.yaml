@@ -1,4 +1,6 @@
 # Add your own new vars here to be used by your own custom playbook hook such as UPDATE-<Domain>/yaml
+account_email: someone@somedomain.com
+contact_email: "{{ account_email }}"
 
 # List of cert_domains. Wildcard - use *. test_url is the url that we do tls connect to test the expirey date
 cert_domains:
@@ -17,6 +19,7 @@ letsencrypt_challenge: http-01
 
 # When it is dns-01 select the method to update. Look into the update-XXX.yaml for xample
 dns_method: "duckdns"
+duckdns_org_account_token: XXX
 
 #account_email: "someone@somewhere.com"
 remaining_days: 12
