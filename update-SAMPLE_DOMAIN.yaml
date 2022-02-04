@@ -72,8 +72,8 @@
     acme_version: 2
     terms_agreed: yes
     acme_directory: "{{ acme_directory }}"
-    csr: "{{ work_dir }}/{{ cert_domain }}.csr"
-    dest: "{{ work_dir }}/{{ cert_domain }}.crt"
+    csr: "{{ work_dir }}/{{ cert_domain_filename }}.csr"
+    dest: "{{ work_dir }}/{{ cert_domain_filename }}.crt"
     challenge: "{{ letsencrypt_challenge|default('dns-01') }}"
     remaining_days: "{{ remaining_days }}"
     data: "{{ sample_com_challenge }}"
@@ -88,23 +88,23 @@
 
 # cert conversion and manipulation. You may store it somewhere for other app to use if the cert is wild cards
 - shell: |
-    cat {{ cert_domain }}.crt intermediate.pem > chained-{{ cert_domain }}.crt
+    cat {{ cert_domain_filename }}.crt intermediate.pem > chained-{{ cert_domain_filename }}.crt
 
     # Encrypt key
-    # if [ ! -f {{ cert_domain }}.key ]; then
-    #   openssl rsa -in {{ cert_domain }}-enc.key -passin pass:'{{ key_passphrase }}' -out {{ cert_domain }}.key
+    # if [ ! -f {{ cert_domain_filename }}.key ]; then
+    #   openssl rsa -in {{ cert_domain_filename }}-enc.key -passin pass:'{{ key_passphrase }}' -out {{ cert_domain_filename }}.key
     # fi
 
     # generate java keystore for jenkins to copy over
-    # openssl pkcs12 -inkey {{ cert_domain }}.key -in chained-{{ cert_domain }}.crt  -export -passout pass:'{{ key_passphrase }}' -out {{ cert_domain }}.pkcs12
+    # openssl pkcs12 -inkey {{ cert_domain_filename }}.key -in chained-{{ cert_domain_filename }}.crt  -export -passout pass:'{{ key_passphrase }}' -out {{ cert_domain_filename }}.pkcs12
 
-    # docker run --rm --entrypoint sh -v $(pwd):/work --workdir /work openjdk:15-jdk-alpine3.11 -c  'echo "{{ key_passphrase }}" | keytool -importkeystore -srckeystore {{ cert_domain }}.pkcs12 -srcstoretype pkcs12 -storepass "{{ key_passphrase }}" -destkeystore jenkins.jks -noprompt'
+    # docker run --rm --entrypoint sh -v $(pwd):/work --workdir /work openjdk:15-jdk-alpine3.11 -c  'echo "{{ key_passphrase }}" | keytool -importkeystore -srckeystore {{ cert_domain_filename }}.pkcs12 -srcstoretype pkcs12 -storepass "{{ key_passphrase }}" -destkeystore jenkins.jks -noprompt'
 
     # mv jenkins.jks ../../jenkins.jks
 
-    # if [ ! -f {{ cert_domain }}-enc.key ]; then
-    #   openssl rsa -in {{ cert_domain }}.key -out {{ cert_domain }}-enc.key -passout pass:'{{ key_passphrase }}' -des3
-    #   rm -f {{ cert_domain }}.key
+    # if [ ! -f {{ cert_domain_filename }}-enc.key ]; then
+    #   openssl rsa -in {{ cert_domain_filename }}.key -out {{ cert_domain_filename }}-enc.key -passout pass:'{{ key_passphrase }}' -des3
+    #   rm -f {{ cert_domain_filename }}.key
     # fi
     # this may fail for the first time as we have not build the image yet
     # ( cd ../../ && yes | ./build.sh update-cert {{ key_passphrase }} )
