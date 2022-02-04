@@ -32,10 +32,11 @@
         path: /etc/maradns/kaykraft.org
         regexp: '^_acme-challenge\.{{ item.key }}\. .*$'
         line: "{{ item.key }}. TXT '{{ item.value[0] }}'"
-        loop: "{{ query('dict', sample_com_challenge.challenge_data_dns|default({})) }}"
-        become: yes
+      loop: "{{ query('dict', sample_com_challenge.challenge_data_dns|default({})) }}"
+      become: yes
     - shell: systemctl restart maradns
   when: sample_com_challenge is changed and letsencrypt_challenge == "dns-01" and dns_method == "maradns"
+
 
 - block:
     - when: not sample_com_challenge['challenge_data']
