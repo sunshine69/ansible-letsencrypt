@@ -2,7 +2,8 @@
 account_email: someone@somedomain.com
 contact_email: "{{ account_email }}"
 
-# List of cert_domains. Wildcard - use *. test_url is the url that we do tls connect to test the expirey date
+# List of cert_domains. Wildcard - use *. test_url is the url that we do tls connect to test the expiry date
+# remember if it is wildcard you need to set letsencrypt_challenge: dns-01
 cert_domains:
   - name: "*.example.org"
     test_url: somedomain.com:8080
