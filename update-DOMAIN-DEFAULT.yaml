@@ -1,6 +1,6 @@
-# This task file is based per cases to deal with how to verify domain. That
-# name should be update-{{ cert_domain }}.yaml and be included in the main
-# play.yaml.
+# This task file is based per cases to deal with how to verify domain.
+# You should add your own code to the shell section below to copy the newly
+# cert and key and restart your services
 
 # In this you have to provide a way to verify your domain to letsencrypt
 # Samples to use duckdns.org, aws route53 and by default spawn a http server at port 80 for http-01
@@ -12,24 +12,10 @@
     loop: "{{ query('dict', sample_com_challenge.challenge_data_dns|default({})) }}"
   when: sample_com_challenge is changed and letsencrypt_challenge == "dns-01" and dns_method == "duckdns"
 
-# Sample to update aws route53
-- block:
-    - name: Update TXT record to aws
-      route53:
-        profile: route53admin
-        state: present
-        zone: act2.com.au
-        record: "{{ item.key }}"
-        type: TXT
-        value: '"{{ item.value[0] }}"'
-        overwrite: yes
-      loop: "{{ query('dict', sample_com_challenge.challenge_data_dns|default({})) }}"
-  when: sample_com_challenge is changed and letsencrypt_challenge == "dns-01" and dns_method == "route53"
-
 - block:
     - name: Update TXT record to maradns config
       lineinfile:
-        path: /etc/maradns/kaykraft.org
+        path: /etc/maradns/{{ cert_domain }}
         regexp: '^_acme-challenge\.{{ item.key }}\. .*$'
         line: "{{ item.key }}. TXT '{{ item.value[0] }}'"
       loop: "{{ query('dict', sample_com_challenge.challenge_data_dns|default({})) }}"
@@ -38,11 +24,25 @@
   when: sample_com_challenge is changed and letsencrypt_challenge == "dns-01" and dns_method == "maradns"
 
 
+# Sample to update aws route53
+- block:
+    - name: Update TXT record to aws
+      route53:
+        profile: {{ route53_aws_profile }}
+        state: present
+        zone: "{{ route53_zone }}"
+        record: "{{ item.key }}"
+        type: TXT
+        value: '"{{ item.value[0] }}"'
+        overwrite: yes
+      loop: "{{ query('dict', sample_com_challenge.challenge_data_dns|default({})) }}"
+  when: sample_com_challenge is changed and letsencrypt_challenge == "dns-01" and dns_method == "route53"
+
 - block:
     - when: not sample_com_challenge['challenge_data']
       debug:
         msg: "challenge_data is empty. Saw in staging directory where the server return changes is yes but no challenge data"
-  
+
     - name: Start simple python web server at port 80
       shell: "python3 -m http.server 80"
       async: 600
@@ -59,7 +59,7 @@
     - shell: "rm -f {{ work_dir }}/.well-known/acme-challenge/* || true"
     - copy:
         dest: "{{ work_dir }}/{{ sample_com_challenge['challenge_data'][cert_domain]['http-01']['resource'] }}"
-        content: "{{ sample_com_challenge['challenge_data'][cert_domain]['http-01']['resource_value'] }}"      
+        content: "{{ sample_com_challenge['challenge_data'][cert_domain]['http-01']['resource_value'] }}"
   when: sample_com_challenge is changed and sample_com_challenge['challenge_data'] and letsencrypt_challenge == "http-01"
 
 - pause:
@@ -80,15 +80,19 @@
   when: sample_com_challenge is changed and sample_com_challenge['challenge_data']
 
 - name: Stop the http server
-  shell: | 
+  shell: |
     pid=$(ps -ef| grep -v grep | grep  'python3 -m http.server 80' | awk '{print $2}')
     kill $pid
-  become: yes 
+  become: yes
   ignore_errors: yes
+  when: letsencrypt_challenge == "http-01"
 
 # cert conversion and manipulation. You may store it somewhere for other app to use if the cert is wild cards
 - shell: |
     cat {{ cert_domain_filename }}.crt intermediate.pem > chained-{{ cert_domain_filename }}.crt
+    mkdir -p /etc/nginx/ssl || true
+    cp -a {{ cert_domain_filename }}.key chained-{{ cert_domain_filename }}.crt /etc/nginx/ssl/
+    systemctl restart nginx
 
     # Encrypt key
     # if [ ! -f {{ cert_domain_filename }}.key ]; then

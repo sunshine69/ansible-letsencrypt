@@ -1,13 +1,33 @@
 # Add your own new vars here to be used by your own custom playbook hook such as UPDATE-<Domain>/yaml
-account_email: someone@somedomain.com
+account_email: yourmail@your-domain.com
 contact_email: "{{ account_email }}"
 
-# List of cert_domains. Wildcard - use *. test_url is the url that we do tls connect to test the expiry date
-# remember if it is wildcard you need to set letsencrypt_challenge: dns-01
+# List of cert_domains. Wildcard - use *. test_url is the url that we do tls connect to test the expirey date
 cert_domains:
-  - name: "*.example.org"
-    test_url: somedomain.com:8080
+  - name: "yourdomain.com"
+    test_url: yourdomain.com:443
     minimum_remaining_days: 14
+    # dns-01 also supported. Implement it in the update-<YOUR_DOMAIN>.yaml. Defauled valued if not set is dns-01
+    # you can also choose http-01 which will satrt a python web server on port
+    # 80. See update-DOMAIN-DEFAULT.yaml for details
+    letsencrypt_challenge: dns-01
+    # When it is dns-01 select the method to update. Look into the update-DOMAIN-DEFAULT.yaml for xample
+    dns_method: "maradns"
+    # duckdns does not support wildcards
+  - name: "your-site.duckdns.org"
+    test_url: your-site.duckdns.org:443
+    minimum_remaining_days: 14
+    dns_method: "duckdns"
+
+# dns_method support: Possible values: duckdns (default), maradns, route53
+# Note the support for maradns. Assume you have installed maradns in the same server that run ansible. And your zone file is in /etc/maradns/{{ cert_domain }}. See update-DOMAIN-DEFAULT.yaml to see how it works
+
+# route53 support. Assume you configured awscli config profile - the name is
+# `profile_name` and zone `your_route53_zone`.
+route53_aws_profile: profile_name
+route53_zone: your_route53_zone
+
+# You can write more dns_method support on update-DOMAIN-DEFAULT.yaml.
 
 acme_directory: https://acme-v02.api.letsencrypt.org/directory
 # For testing
@@ -15,16 +35,13 @@ acme_directory: https://acme-v02.api.letsencrypt.org/directory
 
 # Look https://letsencrypt.org/certificates/ read the section Intermediate Certificates.
 intermediate_pem_url: "https://letsencrypt.org/certs/lets-encrypt-r3.pem"
-# dns-01 also supported. Implement it in the update-<YOUR_DOMAIN>.yaml
-letsencrypt_challenge: http-01
-
 # When it is dns-01 select the method to update. Look into the update-XXX.yaml for xample
-dns_method: "duckdns"
-duckdns_org_account_token: XXX
+
+duckdns_org_account_token: <Your token>
 
 #account_email: "someone@somewhere.com"
 remaining_days: 12
 
 # Used to encrypt your key or in your script hook to generate/convert into different type
 # (like java cert requries to have encrypted key
-key_passphrase: your-secret-passphrase
+key_passphrase: 1qa2ws

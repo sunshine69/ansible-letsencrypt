@@ -1,6 +1,27 @@
 - set_fact:
     cert_domain_filename: "{{ cert_domain_item['name'] | replace('*', 'star') }}"
     cert_domain: "{{ cert_domain_item['name'] }}"
+    cert_csr_filename: "{{ cert_domain_item['name'] | replace('*', 'star') }}.csr"
+    letsencrypt_challenge: "{{ cert_domain_item['letsencrypt_challenge'] | default('dns-01') }}"
+    dns_method: "{{ cert_domain_item['dns_method'] | default('duckdns') }}"
+
+- name: Detect if key exists
+  stat:
+    path: "{{ cert_domain_filename }}.key"
+  register: key_file
+
+- name: Set fact key_file_exist
+  set_fact:
+    key_file_exist: true
+  when: key_file.stat.exists
+
+- name: Set fact key_file_exist
+  set_fact:
+    key_file_exist: false
+  when: not key_file.stat.exists
+
+- debug: var=key_file_exist
+- debug: var=reset_key
 
 - block:
     - name: "Generate the {{ cert_domain_filename }}.csr_details.txt"
@@ -21,7 +42,7 @@
         chdir: "{{ work_dir }}"
         executable: /bin/bash
 
-  when: reset_key|default()
+  when: reset_key|default() or not key_file_exist
 
 - acme_certificate:
     acme_directory: "{{ acme_directory }}"
@@ -38,6 +59,6 @@
 - debug:
     var: sample_com_challenge
 
-- include_tasks: "update-{{ cert_domain_filename }}.yaml"
+- include_tasks: "update-DOMAIN-DEFAULT.yaml"
   when: sample_com_challenge.changed|default() or reset_key|default()
 
